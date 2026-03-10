@@ -14,12 +14,19 @@ export async function markDebtPaid(saleId: number): Promise<ActionResult> {
   const sale = await prisma.sale.findUnique({ where: { id: saleId } });
   if (!sale) return { ok: false, error: "Sale not found." };
   if (!isOpenDebt(sale)) return { ok: false, error: "This debt is not open." };
+  const balancePaidNow = sale.total - sale.amountReceived;
   await prisma.sale.update({
     where: { id: saleId },
-    data: { amountReceived: sale.total, debtStatus: "paid" },
+    data: {
+      amountReceived: sale.total,
+      debtStatus: "paid",
+      debtPaidAt: new Date(),
+      debtPaymentAmount: balancePaidNow,
+    },
   });
   revalidatePath("/debts");
   revalidatePath("/");
+  revalidatePath("/reports");
   return { ok: true };
 }
 

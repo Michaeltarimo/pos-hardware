@@ -102,6 +102,8 @@ model Sale {
   amountReceived  Int       @default(0) // in Tsh; balanceDue = total - amountReceived (debt when > 0)
   customerName    String?   // optional: who owes (for credit / open debts)
   debtStatus      String?   // for debt sales: "open" | "paid" | "forgiven"
+  debtPaidAt      DateTime? // when debt was marked paid (so this payment counts for that day's revenue)
+  debtPaymentAmount Int?    // amount received when marked paid (total - amountReceived before)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   lines           SaleLine[]

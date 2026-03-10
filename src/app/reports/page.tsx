@@ -14,10 +14,21 @@ export default async function ReportsPage() {
     > };
   };
 
-  const [sales, saleLines, products] = await Promise.all([
+  const [sales, debtPayments, saleLines, products] = await Promise.all([
     db.sale.findMany({
       select: { id: true, date: true, total: true },
       orderBy: { date: "asc" },
+    }),
+    (prisma as unknown as {
+      sale: { findMany: (args: object) => Promise<
+        { debtPaidAt: Date | null; debtPaymentAmount: number | null }[]
+      > };
+    }).sale.findMany({
+      where: {
+        debtPaidAt: { not: null },
+        debtPaymentAmount: { not: null },
+      },
+      select: { debtPaidAt: true, debtPaymentAmount: true },
     }),
     db.saleLine.findMany({
       select: { productId: true, quantity: true, price: true, sale: { select: { date: true } } },
@@ -37,13 +48,20 @@ export default async function ReportsPage() {
     }),
   ]);
 
-  // Daily sales: group by date (ISO date string)
+  // Daily sales: group by date (sale date) + add debt payments on the day they were paid
   const byDate = new Map<string, { count: number; total: number }>();
   for (const s of sales) {
     const dateStr = s.date.toISOString().slice(0, 10);
     const cur = byDate.get(dateStr) ?? { count: 0, total: 0 };
     cur.count += 1;
     cur.total += s.total;
+    byDate.set(dateStr, cur);
+  }
+  for (const p of debtPayments) {
+    if (!p.debtPaidAt || p.debtPaymentAmount == null) continue;
+    const dateStr = p.debtPaidAt.toISOString().slice(0, 10);
+    const cur = byDate.get(dateStr) ?? { count: 0, total: 0 };
+    cur.total += p.debtPaymentAmount;
     byDate.set(dateStr, cur);
   }
   const dailySales = Array.from(byDate.entries())

@@ -26,6 +26,8 @@ export default async function Home() {
 
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const tomorrowStart = new Date(todayStart);
+  tomorrowStart.setDate(tomorrowStart.getDate() + 1);
   const weekStart = new Date(todayStart);
   weekStart.setDate(weekStart.getDate() - 6);
 
@@ -46,24 +48,48 @@ export default async function Home() {
     }),
   ]);
 
-  const openDebtSales = await (prisma as unknown as {
-    sale: { findMany: (args: object) => Promise<
-      { total: number; amountReceived: number; debtStatus: string | null }[]
-    > };
-  }).sale.findMany({
-    where: {
-      total: { gt: 0 },
-    },
-    select: { total: true, amountReceived: true, debtStatus: true },
-  });
+  const [openDebtSales, debtPaymentsInWeek] = await Promise.all([
+    (prisma as unknown as {
+      sale: { findMany: (args: object) => Promise<
+        { total: number; amountReceived: number; debtStatus: string | null }[]
+      > };
+    }).sale.findMany({
+      where: { total: { gt: 0 } },
+      select: { total: true, amountReceived: true, debtStatus: true },
+    }),
+    (prisma as unknown as {
+      sale: { findMany: (args: object) => Promise<
+        { debtPaidAt: Date | null; debtPaymentAmount: number | null }[]
+      > };
+    }).sale.findMany({
+      where: {
+        debtPaidAt: { gte: weekStart, lt: tomorrowStart },
+        debtPaymentAmount: { not: null },
+      },
+      select: { debtPaidAt: true, debtPaymentAmount: true },
+    }),
+  ]);
   const openDebtsSum = openDebtSales
     .filter((s) => s.total > s.amountReceived && (s.debtStatus === null || s.debtStatus === "open"))
     .reduce((sum, s) => sum + (s.total - s.amountReceived), 0);
 
-  const todaySales = sales
-    .filter((s) => s.date >= todayStart)
-    .reduce((sum, s) => sum + s.total, 0);
-  const weekTotal = sales.reduce((sum, s) => sum + s.total, 0);
+  const debtPaymentsToday = debtPaymentsInWeek.filter(
+    (p) => p.debtPaidAt && p.debtPaidAt >= todayStart && p.debtPaidAt < tomorrowStart,
+  );
+  const todayDebtPaymentSum = debtPaymentsToday.reduce(
+    (sum, p) => sum + (p.debtPaymentAmount ?? 0),
+    0,
+  );
+
+  const todaySales =
+    sales
+      .filter((s) => s.date >= todayStart)
+      .reduce((sum, s) => sum + s.total, 0) + todayDebtPaymentSum;
+  const weekDebtPaymentSum = debtPaymentsInWeek.reduce(
+    (sum, p) => sum + (p.debtPaymentAmount ?? 0),
+    0,
+  );
+  const weekTotal = sales.reduce((sum, s) => sum + s.total, 0) + weekDebtPaymentSum;
 
   const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const weekSalesByDay: { day: string; sales: number; invoices: number }[] = [];
@@ -76,9 +102,20 @@ export default async function Home() {
     const daySales = sales.filter(
       (s) => s.date >= dayStart && s.date < dayEnd,
     );
+    const dayDebtPayments = debtPaymentsInWeek.filter(
+      (p) =>
+        p.debtPaidAt &&
+        p.debtPaidAt >= dayStart &&
+        p.debtPaidAt < dayEnd &&
+        p.debtPaymentAmount != null,
+    );
+    const dayDebtSum = dayDebtPayments.reduce(
+      (sum, p) => sum + (p.debtPaymentAmount ?? 0),
+      0,
+    );
     weekSalesByDay.push({
       day: dayLabels[dayStart.getDay()],
-      sales: daySales.reduce((sum, s) => sum + s.total, 0),
+      sales: daySales.reduce((sum, s) => sum + s.total, 0) + dayDebtSum,
       invoices: daySales.length,
     });
   }

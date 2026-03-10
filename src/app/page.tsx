@@ -303,8 +303,10 @@ export default function Home() {
                   }
                 />
                 <Tooltip
-                  formatter={(value: number) => [
-                    `${(value / 1_000_000).toFixed(2)}M Tsh`,
+                  formatter={(value: unknown) => [
+                    typeof value === "number"
+                      ? `${(value / 1_000_000).toFixed(2)}M Tsh`
+                      : String(value),
                     "Sales",
                   ]}
                   contentStyle={{

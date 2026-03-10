@@ -29,7 +29,12 @@ async function login(formData: FormData) {
   redirect("/");
 }
 
-export default function AuthPage() {
+export default async function AuthPage() {
+  const admin = await prisma.user.findFirst({
+    where: { role: "ADMIN" },
+    select: { username: true },
+  });
+
   return (
     <div
       className="relative flex min-h-[70vh] items-center justify-center bg-sky-50"
@@ -75,7 +80,7 @@ export default function AuthPage() {
               id="username"
               type="text"
               name="username"
-              placeholder="e.g. tarimo"
+              placeholder={admin?.username ? `e.g. ${admin.username}` : "e.g. tarimo"}
               className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none ring-0 transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
             />
           </div>
@@ -105,7 +110,7 @@ export default function AuthPage() {
         </form>
 
         <div className="pt-2">
-          <AuthBackdoor />
+          <AuthBackdoor adminUsername={admin?.username ?? null} />
         </div>
       </div>
     </div>

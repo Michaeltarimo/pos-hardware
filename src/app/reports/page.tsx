@@ -373,11 +373,11 @@ export default function ReportsPage() {
                       }
                     />
                     <Tooltip
-                      formatter={(value: number, name: string) => [
-                        name === "amount"
+                      formatter={(value, name) => [
+                        String(name) === "amount" && typeof value === "number"
                           ? `${value.toLocaleString()} Tsh`
                           : value,
-                        name === "amount" ? "Total" : "Invoices",
+                        String(name) === "amount" ? "Total" : "Invoices",
                       ]}
                       labelFormatter={(label) => `Date: ${label}`}
                     />
@@ -443,7 +443,7 @@ export default function ReportsPage() {
                       cy="50%"
                       outerRadius={80}
                       label={({ name, percent }) =>
-                        `${name} ${(percent * 100).toFixed(0)}%`
+                        `${name} ${((percent ?? 0) * 100).toFixed(0)}%`
                       }
                     >
                       {pieData.map((_, index) => (
@@ -454,8 +454,8 @@ export default function ReportsPage() {
                       ))}
                     </Pie>
                     <Tooltip
-                      formatter={(value: number) => [
-                        `${value} sold`,
+                      formatter={(value) => [
+                        `${value ?? 0} sold`,
                         "Quantity",
                       ]}
                     />

@@ -1,6 +1,6 @@
 export default function Home() {
   return (
-    <div className="space-y-6">
+    <div className="flex flex-1 flex-col space-y-6">
       <header className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-semibold tracking-tight">Dashboard</h2>
@@ -45,10 +45,10 @@ export default function Home() {
           Getting started
         </h3>
         <ol className="mt-3 list-decimal space-y-1 pl-5 text-sm text-slate-600">
-          <li>Add products in the Products page.</li>
-          <li>Record stock coming in via Purchases.</li>
-          <li>Use the POS screen to sell to customers.</li>
-          <li>Check Reports to see sales and stock.</li>
+          <li>Design and build the POS sale screen.</li>
+          <li>Add products and stock management pages.</li>
+          <li>Connect purchases to increase stock.</li>
+          <li>Build sales and stock reports.</li>
         </ol>
       </section>
     </div>

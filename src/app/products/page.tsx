@@ -1,6 +1,7 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   PencilSquareIcon,
   TrashIcon,
@@ -175,12 +176,33 @@ const mockUnits = [
   { id: 7, name: "bucket", note: "Bucket (large paint, compound)" },
 ];
 
+const LOW_STOCK_THRESHOLD = 20;
+
 export default function ProductsPage() {
+  const searchParams = useSearchParams();
+  const filterLowStock = searchParams.get("lowStock") === "1";
+
   const [view, setView] = useState<"products" | "categories" | "units">(
     "products",
   );
   const [editMode, setEditMode] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const filteredProducts = useMemo(() => {
+    let list = mockProducts;
+    if (filterLowStock) {
+      list = list.filter((p) => p.stock < LOW_STOCK_THRESHOLD);
+    }
+    const q = search.toLowerCase().trim();
+    if (q) {
+      list = list.filter(
+        (p) =>
+          p.name.toLowerCase().includes(q) || p.code.toLowerCase().includes(q),
+      );
+    }
+    return list;
+  }, [filterLowStock, search]);
 
   const isProductView = view === "products";
   const isCategoryView = view === "categories";
@@ -284,15 +306,30 @@ export default function ProductsPage() {
                 Product catalogue
               </p>
               <p className="text-xs text-slate-500">
+                {filterLowStock
+                  ? `Showing only low stock (below ${LOW_STOCK_THRESHOLD}). `
+                  : ""}
                 This is mock data. We&apos;ll connect to the real database
                 later.
               </p>
             </div>
-            <input
-              type="text"
-              placeholder="Search by name or code…"
-              className="w-full max-w-xs rounded-full border border-slate-200 px-3 py-1.5 text-sm outline-none ring-0 transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
-            />
+            <div className="flex flex-wrap items-center gap-2">
+              {filterLowStock && (
+                <a
+                  href="/products"
+                  className="rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-[11px] font-medium text-sky-700 hover:bg-sky-100"
+                >
+                  Show all
+                </a>
+              )}
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search by name or code…"
+                className="w-full max-w-xs rounded-full border border-slate-200 px-3 py-1.5 text-sm outline-none ring-0 transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
+              />
+            </div>
           </div>
 
           <div className="mt-4 overflow-hidden rounded-lg border border-slate-100">
@@ -312,7 +349,7 @@ export default function ProductsPage() {
                 </tr>
               </thead>
               <tbody>
-                {mockProducts.map((p, idx) => (
+                {filteredProducts.map((p, idx) => (
                   <tr
                     key={p.id}
                     className={
@@ -324,7 +361,13 @@ export default function ProductsPage() {
                       {p.code}
                     </td>
                     <td className="px-3 py-2 text-slate-600">{p.category}</td>
-                    <td className="px-3 py-2 text-right text-slate-800">
+                    <td
+                      className={`px-3 py-2 text-right ${
+                        p.stock < LOW_STOCK_THRESHOLD
+                          ? "font-semibold text-red-600"
+                          : "text-slate-800"
+                      }`}
+                    >
                       {p.stock} {p.unit}
                     </td>
                     <td className="px-3 py-2 text-right text-slate-800">

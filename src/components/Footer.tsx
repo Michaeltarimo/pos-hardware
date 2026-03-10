@@ -14,7 +14,7 @@ export function Footer() {
     <footer className="fixed inset-x-0 bottom-0 z-10 flex justify-center pb-3 pt-3 text-[11px] text-slate-500 bg-sky-50">
       <div className="flex w-[80%] items-center justify-between">
         <p className="truncate">
-          Tarimo Hardware POS · v0.1 · © {year}{" "}
+          Tarimo Hardware POS · v0.1 · © {year} Built by{" "}
           <a
             href="https://michaeltarimo.com"
             target="_blank"

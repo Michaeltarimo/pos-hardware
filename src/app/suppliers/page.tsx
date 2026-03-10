@@ -186,10 +186,10 @@ export default function SuppliersPage() {
           <table className="min-w-full border-collapse text-left text-xs">
             <thead className="bg-slate-50 text-[11px] uppercase text-slate-500">
               <tr>
-                <th className="px-3 py-2 font-medium">Name</th>
-                <th className="px-3 py-2 font-medium">Contact</th>
+                <th className="px-3 py-2 font-medium">Supplier name</th>
+                <th className="px-3 py-2 font-medium">Contact person</th>
                 <th className="px-3 py-2 font-medium">Phone</th>
-                <th className="px-3 py-2 font-medium">Location</th>
+                <th className="px-3 py-2 font-medium">Location / address</th>
                 <th className="px-3 py-2 text-right font-medium">
                   Balance owing
                 </th>

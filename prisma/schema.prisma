@@ -18,6 +18,7 @@ model User {
   role         String   // "ADMIN" | "CASHIER"
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  sales        Sale[]
 }
 
 model Category {
@@ -37,18 +38,83 @@ model Unit {
 }
 
 model Product {
-  id            Int       @id @default(autoincrement())
+  id            Int            @id @default(autoincrement())
   name          String
-  code          String    @unique  // SKU / barcode
+  code          String         @unique  // SKU / barcode
   categoryId    Int
-  category      Category  @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-  unit          String    // unit name from Unit table (e.g. piece, box, kg, crate)
-  packInfo      String?   // e.g. "1 box = 100 pieces"
-  costPrice     Int       // in Tsh
-  sellingPrice  Int       // in Tsh
-  stock         Int       @default(0)
-  reorderLevel  Int       @default(20)
-  taxRate       Float?    // optional, e.g. 0.18 for 18%
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  category      Category       @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  unit          String         // unit name from Unit table (e.g. piece, box, kg, crate)
+  packInfo      String?        // e.g. "1 box = 100 pieces"
+  costPrice     Int            // in Tsh
+  sellingPrice  Int            // in Tsh
+  stock         Int            @default(0)
+  reorderLevel  Int            @default(20)
+  taxRate       Float?         // optional, e.g. 0.18 for 18%
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  purchaseLines PurchaseLine[]
+  saleLines     SaleLine[]
+}
+
+model Supplier {
+  id          Int       @id @default(autoincrement())
+  name        String
+  contactName String?
+  phone       String?
+  location    String?   // address / location
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  purchases   Purchase[]
+}
+
+model Purchase {
+  id           Int            @id @default(autoincrement())
+  supplierId   Int
+  supplier     Supplier       @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  date         DateTime       @default(now())
+  total        Int            // grand total in Tsh
+  paymentType  String?        // e.g. cash, mobile, card
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  lines        PurchaseLine[]
+}
+
+model PurchaseLine {
+  id         Int      @id @default(autoincrement())
+  purchaseId Int
+  purchase   Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  productId  Int
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+  quantity   Int
+  unitCost   Int      // cost per unit in Tsh
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+// Phase 4 – Sales (POS). amountReceived < total => open debt (balanceDue).
+model Sale {
+  id              Int       @id @default(autoincrement())
+  userId          Int
+  user            User      @relation(fields: [userId], references: [id], onDelete: Restrict)
+  date            DateTime  @default(now())
+  total           Int       // grand total in Tsh
+  paymentMethod   String?   // cash, mobile, card, credit
+  amountReceived  Int       @default(0) // in Tsh; balanceDue = total - amountReceived (debt when > 0)
+  customerName    String?   // optional: who owes (for credit / open debts)
+  debtStatus      String?   // for debt sales: "open" | "paid" | "forgiven"
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  lines           SaleLine[]
+}
+
+model SaleLine {
+  id        Int     @id @default(autoincrement())
+  saleId    Int
+  sale      Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  productId Int
+  product   Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+  quantity  Int
+  price     Int     // selling price per unit in Tsh at time of sale
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

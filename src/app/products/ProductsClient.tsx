@@ -15,20 +15,9 @@ import {
   deleteProduct,
   createCategory,
   deleteCategory,
+  createUnit,
+  deleteUnit,
 } from "./actions";
-
-const UNITS = [
-  { name: "piece", note: "Single item (e.g. hammer, bulb)" },
-  { name: "box", note: "Box with fixed quantity (e.g. nails)" },
-  { name: "bag", note: "Bag (e.g. cement, gypsum)" },
-  { name: "kg", note: "Kilogram (e.g. loose nails)" },
-  { name: "length", note: "Per length (e.g. pipe, timber)" },
-  { name: "tin", note: "Tin of paint" },
-  { name: "bucket", note: "Bucket (large paint, compound)" },
-  { name: "meter", note: "Per meter" },
-  { name: "litre", note: "Per litre" },
-  { name: "roll", note: "Roll" },
-];
 
 const LOW_STOCK_THRESHOLD = 20;
 
@@ -52,12 +41,19 @@ type CategoryWithCount = {
   _count: { products: number };
 };
 
+type UnitRow = {
+  id: number;
+  name: string;
+  note: string | null;
+};
+
 type Props = {
   products: ProductWithCategory[];
   categories: CategoryWithCount[];
+  units: UnitRow[];
 };
 
-export function ProductsClient({ products: initialProducts, categories: initialCategories }: Props) {
+export function ProductsClient({ products: initialProducts, categories: initialCategories, units: initialUnits }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const filterLowStock = searchParams.get("lowStock") === "1";
@@ -80,6 +76,8 @@ export function ProductsClient({ products: initialProducts, categories: initialC
   const [productStock, setProductStock] = useState("");
   const [productReorderLevel, setProductReorderLevel] = useState("20");
   const [categoryName, setCategoryName] = useState("");
+  const [unitName, setUnitName] = useState("");
+  const [unitNote, setUnitNote] = useState("");
 
   const filteredProducts = useMemo(() => {
     let list = initialProducts;
@@ -105,7 +103,7 @@ export function ProductsClient({ products: initialProducts, categories: initialC
       setProductName("");
       setProductCode("");
       setProductCategoryId(initialCategories[0]?.id.toString() ?? "");
-      setProductUnit(UNITS[0]?.name ?? "piece");
+      setProductUnit(initialUnits[0]?.name ?? "piece");
       setProductPackInfo("");
       setProductCostPrice("");
       setProductSellingPrice("");
@@ -116,6 +114,8 @@ export function ProductsClient({ products: initialProducts, categories: initialC
       setCategoryName("");
     } else {
       setModalMode("new-unit");
+      setUnitName("");
+      setUnitNote("");
     }
     setShowModal(true);
   };
@@ -175,6 +175,33 @@ export function ProductsClient({ products: initialProducts, categories: initialC
       toast.success("Category added.");
       closeModal();
       setCategoryName("");
+      router.refresh();
+    } else {
+      toast.error(result.error);
+    }
+  };
+
+  const handleSubmitUnit = async (e: FormEvent) => {
+    e.preventDefault();
+    const formData = new FormData();
+    formData.set("name", unitName.trim());
+    formData.set("note", unitNote.trim());
+    const result = await createUnit(formData);
+    if (result.ok) {
+      toast.success("Unit added. You can use it when creating or editing products.");
+      closeModal();
+      setUnitName("");
+      setUnitNote("");
+      router.refresh();
+    } else {
+      toast.error(result.error);
+    }
+  };
+
+  const handleDeleteUnit = async (id: number) => {
+    const result = await deleteUnit(id);
+    if (result.ok) {
+      toast.success("Unit removed.");
       router.refresh();
     } else {
       toast.error(result.error);
@@ -433,21 +460,39 @@ export function ProductsClient({ products: initialProducts, categories: initialC
             <div>
               <h3 className="text-sm font-semibold text-slate-800">Units</h3>
               <p className="text-xs text-slate-500">
-                Predefined units for products. New units can be added in a future version.
+                Add and manage units for tracking product quantity (e.g. piece, box, crate, dozen).
               </p>
             </div>
+            <button
+              type="button"
+              onClick={openNewModal}
+              className="inline-flex items-center gap-1 rounded-full border border-sky-200 px-3 py-1 text-[11px] font-semibold text-sky-700 hover:bg-sky-50 cursor-pointer"
+            >
+              <SquaresPlusIcon className="h-3.5 w-3.5" />
+              New unit
+            </button>
           </div>
 
           <div className="mt-1 space-y-1.5 text-xs">
-            {UNITS.map((u) => (
+            {initialUnits.map((u) => (
               <div
-                key={u.name}
+                key={u.id}
                 className="flex items-center justify-between rounded-md border border-slate-100 bg-slate-50/60 px-3 py-2"
               >
                 <div>
                   <p className="text-xs font-medium text-slate-800">{u.name}</p>
-                  <p className="text-[11px] text-slate-500">{u.note}</p>
+                  <p className="text-[11px] text-slate-500">{u.note ?? "—"}</p>
                 </div>
+                {editMode && (
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteUnit(u.id)}
+                    className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] text-red-500 hover:bg-red-50 cursor-pointer"
+                  >
+                    <TrashIcon className="h-3 w-3" />
+                    Delete
+                  </button>
+                )}
               </div>
             ))}
           </div>
@@ -473,7 +518,7 @@ export function ProductsClient({ products: initialProducts, categories: initialC
                     ? "Add or update an item in the catalogue."
                     : modalMode === "new-category"
                     ? "Create a category to group similar products."
-                    : "Units are predefined for now."}
+                    : "Add a unit to use when tracking product quantity (e.g. crate, dozen)."}
                 </p>
               </div>
               <button
@@ -535,14 +580,14 @@ export function ProductsClient({ products: initialProducts, categories: initialC
                       <label className="text-xs font-medium uppercase tracking-wide text-slate-500">
                         Unit
                       </label>
-                      <select
+                        <select
                         required
                         value={productUnit}
                         onChange={(e) => setProductUnit(e.target.value)}
                         className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none ring-0 transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
                       >
-                        {UNITS.map((u) => (
-                          <option key={u.name} value={u.name}>
+                        {initialUnits.map((u) => (
+                          <option key={u.id} value={u.name}>
                             {u.name}
                           </option>
                         ))}
@@ -666,9 +711,48 @@ export function ProductsClient({ products: initialProducts, categories: initialC
             )}
 
             {modalMode === "new-unit" && (
-              <p className="text-sm text-slate-600">
-                Units are predefined. You can use any of the listed units when creating or editing a product.
-              </p>
+              <form className="space-y-3 text-sm" onSubmit={handleSubmitUnit}>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                    Unit name
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={unitName}
+                    onChange={(e) => setUnitName(e.target.value)}
+                    placeholder="e.g. crate, dozen, pack"
+                    className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none ring-0 transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                    Note (optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={unitNote}
+                    onChange={(e) => setUnitNote(e.target.value)}
+                    placeholder="e.g. 1 crate = 12 tins"
+                    className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none ring-0 transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
+                  />
+                </div>
+                <div className="mt-4 flex items-center justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={closeModal}
+                    className="rounded-full px-3 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="inline-flex items-center rounded-full bg-sky-600 px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-sky-700 cursor-pointer"
+                  >
+                    Save
+                  </button>
+                </div>
+              </form>
             )}
           </div>
         </div>

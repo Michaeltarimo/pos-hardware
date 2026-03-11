@@ -8,6 +8,7 @@ import {
   addCashier,
   removeCashier,
   updateCashierPassword,
+  resetSystem,
 } from "./actions";
 
 type Cashier = {
@@ -152,11 +153,21 @@ export function SettingsForm({ currentUser, cashiers: initialCashiers }: Props) 
     toast.info("Restore (mock).");
   };
 
-  const handleResetSystem = () => {
+  const handleResetSystem = async () => {
     if (resetConfirmText !== "RESET") return;
-    setResetDone(true);
-    setResetConfirmText("");
-    toast.warning("System reset (mock). In production the database would be cleared.");
+    const ok = confirm(
+      "Reset system?\n\nThis will delete products, purchases, sales, suppliers, debts, and cashier accounts.\nYour admin account will be kept.\n\nThis cannot be undone."
+    );
+    if (!ok) return;
+    const result = await resetSystem();
+    if (result.ok) {
+      setResetDone(true);
+      setResetConfirmText("");
+      toast.success("System reset completed.");
+      router.refresh();
+    } else {
+      toast.error(result.error);
+    }
   };
 
   return (

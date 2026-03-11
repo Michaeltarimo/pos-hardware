@@ -1,0 +1,63 @@
+Wed Mar 11 09:59:11 AM EAT 2026
+
+===== POS launcher: Wed Mar 11 10:00:58 AM EAT 2026 =====
+PWD: /home/gutoshi/Desktop/Hardware/pos-hardware
+Starting POS server...
+Waiting for server (pid 5988)...
+Server failed to start. Check .pos-server.log
+
+===== POS launcher: Wed Mar 11 10:01:05 AM EAT 2026 =====
+PWD: /home/gutoshi/Desktop/Hardware/pos-hardware
+Starting POS server...
+Waiting for server (pid 6463)...
+Server failed to start. Check .pos-server.log
+
+===== POS launcher: Wed Mar 11 10:02:30 AM EAT 2026 =====
+PWD: /home/gutoshi/Desktop/Hardware/pos-hardware
+Starting POS server...
+Waiting for server (pid 6540)...
+Server failed to start. Check .pos-server.log
+
+===== POS launcher: Wed Mar 11 10:02:34 AM EAT 2026 =====
+PWD: /home/gutoshi/Desktop/Hardware/pos-hardware
+Starting POS server...
+Waiting for server (pid 6560)...
+Server failed to start. Check .pos-server.log
+
+===== POS launcher: Wed Mar 11 10:03:08 AM EAT 2026 =====
+PWD: /home/gutoshi/Desktop/Hardware/pos-hardware
+Starting POS server...
+Waiting for server (pid 6631)...
+Server failed to start. Check .pos-server.log
+
+===== POS launcher: Wed Mar 11 10:03:26 AM EAT 2026 =====
+PWD: /home/gutoshi/Desktop/Hardware/pos-hardware
+Starting POS server...
+Waiting for server (pid 6688)...
+Server failed to start. Check .pos-server.log
+
+===== POS launcher: Wed Mar 11 10:03:59 AM EAT 2026 =====
+PWD: /home/gutoshi/Desktop/Hardware/pos-hardware
+Starting POS server...
+Waiting for server (pid 6742)...
+Server failed to start. Check .pos-server.log
+
+===== POS launcher: Wed Mar 11 10:05:28 AM EAT 2026 =====
+PWD: /home/gutoshi/Desktop/Hardware/pos-hardware
+Starting POS server...
+Using npm: /home/gutoshi/.nvm/versions/node/v22.16.0/bin/npm
+Waiting for server (pid 7334)...
+Server is ready.
+
+===== POS launcher: Wed Mar 11 10:06:00 AM EAT 2026 =====
+PWD: /home/gutoshi/Desktop/Hardware/pos-hardware
+
+===== POS launcher: Wed Mar 11 10:08:48 AM EAT 2026 =====
+PWD: /home/gutoshi/Desktop/Hardware/pos-hardware
+Starting POS server...
+Using npm: /home/gutoshi/.nvm/versions/node/v22.16.0/bin/npm
+Waiting for server (pid 8821)...
+Server failed to start. Check .pos-server.log
+
+===== POS launcher: Wed Mar 11 10:10:39 AM EAT 2026 =====
+PWD: /home/gutoshi/Desktop/Hardware/pos-hardware

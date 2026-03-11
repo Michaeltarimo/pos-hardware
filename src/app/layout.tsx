@@ -18,7 +18,8 @@ async function logout() {
   "use server";
 
   const cookieStore = await cookies();
-  cookieStore.delete("session");
+  // Must match the path used when setting the cookie (path: "/")
+  cookieStore.delete("session", { path: "/" });
   redirect("/auth?status=loggedout");
 }
 
@@ -35,7 +36,7 @@ export default async function RootLayout({
       where: { username: session },
     });
     if (!user) {
-      cookieStore.delete("session");
+      cookieStore.delete("session", { path: "/" });
       redirect("/auth?status=invalid");
     }
   }

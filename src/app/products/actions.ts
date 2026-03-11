@@ -94,10 +94,36 @@ export async function updateProduct(id: number, formData: FormData): Promise<Act
 }
 
 export async function deleteProduct(id: number): Promise<ActionResult> {
-  const existing = await prisma.product.findUnique({ where: { id } });
+  const existing = await prisma.product.findUnique({
+    where: { id },
+    include: {
+      _count: { select: { purchaseLines: true, saleLines: true } },
+    },
+  });
   if (!existing) return { ok: false, error: "Product not found." };
 
-  await prisma.product.delete({ where: { id } });
+  if (existing._count.purchaseLines > 0 || existing._count.saleLines > 0) {
+    return {
+      ok: false,
+      error:
+        "Cannot delete this product because it is used in purchases or sales. For audit/history, keep it (or we can add an Archive feature).",
+    };
+  }
+
+  try {
+    await prisma.product.delete({ where: { id } });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    // Fallback for FK constraint errors (Prisma P2003 etc.)
+    if (message.toLowerCase().includes("foreign key")) {
+      return {
+        ok: false,
+        error:
+          "Cannot delete this product because it is referenced by other records (purchases/sales).",
+      };
+    }
+    throw err;
+  }
   revalidatePath("/products");
   return { ok: true };
 }

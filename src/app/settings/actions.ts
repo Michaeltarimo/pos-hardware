@@ -147,3 +147,38 @@ export async function updateCashierPassword(
   revalidatePath("/settings");
   return { ok: true };
 }
+
+/** Reset system data (keep admin). Only admin. */
+export async function resetSystem(): Promise<AccountResult> {
+  const username = await getSessionUsername();
+  if (!username) return { ok: false, error: "Not logged in." };
+
+  const admin = await prisma.user.findUnique({ where: { username } });
+  if (!admin || admin.role !== "ADMIN") return { ok: false, error: "Only admin can reset the system." };
+
+  await prisma.$transaction(async (tx) => {
+    // Delete in FK-safe order
+    await tx.saleLine.deleteMany({});
+    await tx.sale.deleteMany({});
+    await tx.purchaseLine.deleteMany({});
+    await tx.purchase.deleteMany({});
+
+    await tx.product.deleteMany({});
+    await tx.category.deleteMany({});
+    await tx.unit.deleteMany({});
+    await tx.supplier.deleteMany({});
+
+    // Remove all cashiers (keep current admin)
+    await tx.user.deleteMany({ where: { role: "CASHIER" } });
+  });
+
+  revalidatePath("/");
+  revalidatePath("/pos");
+  revalidatePath("/products");
+  revalidatePath("/purchases");
+  revalidatePath("/suppliers");
+  revalidatePath("/debts");
+  revalidatePath("/reports");
+  revalidatePath("/settings");
+  return { ok: true };
+}

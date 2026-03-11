@@ -162,13 +162,16 @@ export function PurchasesClient({
     }
   };
 
-  const handleQuickAddSupplier = async (e: FormEvent) => {
-    e.preventDefault();
+  const handleQuickAddSupplier = async () => {
     const formData = new FormData();
     formData.set("name", quickName.trim());
     formData.set("contactName", quickContact.trim());
     formData.set("phone", quickPhone.trim());
     formData.set("location", quickLocation.trim());
+    if (!quickName.trim()) {
+      toast.error("Supplier name is required.");
+      return;
+    }
     const result = await createSupplier(formData);
     if (result.ok) {
       toast.success("Supplier added. Select them in the dropdown.");
@@ -357,7 +360,7 @@ export function PurchasesClient({
                   {showQuickSupplier && (
                     <div className="mt-2 space-y-2 rounded-lg border border-slate-100 bg-slate-50 p-3 text-xs">
                       <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-600">Quick add supplier</p>
-                      <form onSubmit={handleQuickAddSupplier} className="grid gap-2 sm:grid-cols-3">
+                      <div className="grid gap-2 sm:grid-cols-3">
                         <input
                           type="text"
                           value={quickName}
@@ -388,12 +391,14 @@ export function PurchasesClient({
                           className="rounded-md border border-slate-200 px-2 py-1.5 text-xs sm:col-span-2"
                         />
                         <button
-                          type="submit"
+                          type="button"
+                          onClick={handleQuickAddSupplier}
+                          disabled={!quickName.trim()}
                           className="rounded-full bg-sky-600 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-sky-700"
                         >
                           Save supplier
                         </button>
-                      </form>
+                      </div>
                     </div>
                   )}
                 </div>
